@@ -42,4 +42,10 @@ app.get("/", (req, res) => {
 // Server Port
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => console.log(`🚀 Server started on port ${PORT}`));
+// Only start server if not in Vercel environment
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => console.log(`🚀 Server started on port ${PORT}`));
+}
+
+// Export for Vercel
+module.exports = app;

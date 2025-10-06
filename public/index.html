@@ -35,7 +35,7 @@
                         <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"></path>
                     </svg>
                 </button>
-                <button class="edit-btn" style="display: none;">Edit Keywords/Chat</button> <!-- Moved Edit Button -->
+                <button id="editBtn" class="edit-btn" style="display: none;">Edit Keywords/Chat</button> <!-- Moved Edit Button -->
             </div>
 
             <!-- <div id="finalPostActions" class="final-post-actions"></div> --> <!-- Commented out as Copy button is removed -->
@@ -50,6 +50,31 @@
             <div class="modal-buttons">
                 <button id="submitFeedbackBtn" class="modal-btn submit">Submit</button>
                 <button id="cancelFeedbackBtn" class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="renameModal" class="modal">
+        <div class="modal-content">
+            <h3>Rename Chat</h3>
+            <p>Enter a new name for this chat session.</p>
+            <input type="text" id="renameText" placeholder="Enter new chat name..." maxlength="50">
+            <div class="modal-buttons">
+                <button id="submitRenameBtn" class="modal-btn submit">Rename</button>
+                <button id="cancelRenameBtn" class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Delete Chat</h3>
+            <p>Are you sure you want to delete this chat session? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button id="confirmDeleteBtn" class="modal-btn submit" style="background: #ef4444;">Delete</button>
+                <button id="cancelDeleteBtn" class="modal-btn cancel">Cancel</button>
             </div>
         </div>
     </div>
@@ -550,5 +575,6 @@
             }
         }
     </script>
+    <script src="script.js"></script>
 </body>
 </html>

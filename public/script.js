@@ -86,18 +86,23 @@ function handleDashboardPage() {
     let linkedinPostContent = null; // Store the LinkedIn post content for copying
     let keywords = []; // Array to store keywords
     let currentKeywordIndex = 0; // Track current keyword index
+    const userId = "60c72b2f9b1d8c001f8e4c1a"; // TODO: Get from auth token
 
     const chatMessages = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
     const logoutBtn = document.getElementById('logoutBtn');
     const newChatBtn = document.getElementById('newChatBtn');
+    const chatList = document.getElementById('chatList');
     const feedbackModal = document.getElementById('feedbackModal');
     const feedbackText = document.getElementById('feedbackText');
     const submitFeedbackBtn = document.getElementById('submitFeedbackBtn');
     const cancelFeedbackBtn = document.getElementById('cancelFeedbackBtn');
     const finalPostActions = document.getElementById('finalPostActions');
-    const editButton = document.querySelector('.edit-btn'); // Reference existing edit button in input-container
+    const editButton = document.getElementById('editBtn'); // Reference existing edit button in input-container
+
+    // Load chat history on page load
+    loadChatHistory();
 
     // Add hover/focus animations
     sendButton.addEventListener('mouseenter', () => {
@@ -154,9 +159,197 @@ function handleDashboardPage() {
         messageInput.disabled = false;
         messageInput.placeholder = "Enter keywords for business insights...";
         editButton.style.display = 'none';
+        
+        // Remove active state from chat items
+        document.querySelectorAll('.chat-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Refresh chat history to update the list
+        loadChatHistory();
     });
     submitFeedbackBtn.addEventListener('click', submitFeedback);
     cancelFeedbackBtn.addEventListener('click', closeFeedbackModal);
+
+    // --- Chat History Functions ---
+    async function loadChatHistory() {
+        try {
+            const res = await fetch(`/api/chat/history/${userId}`);
+            if (res.ok) {
+                const chatHistory = await res.json();
+                displayChatHistory(chatHistory);
+            }
+        } catch (err) {
+            console.error('Failed to load chat history:', err);
+        }
+    }
+
+    function displayChatHistory(chatHistory) {
+        chatList.innerHTML = '';
+        
+        if (chatHistory.length === 0) {
+            chatList.innerHTML = '<div class="no-chats">No previous chats</div>';
+            return;
+        }
+
+        chatHistory.forEach(chat => {
+            const chatItem = document.createElement('div');
+            chatItem.className = 'chat-item';
+            if (chat._id === currentSessionId) {
+                chatItem.classList.add('active');
+            }
+            
+            const date = new Date(chat.createdAt).toLocaleDateString();
+            const time = new Date(chat.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            chatItem.innerHTML = `
+                <div class="chat-title">${chat.title}</div>
+                <div class="chat-meta">${date} ${time}</div>
+                <div class="chat-status ${chat.isProcessing ? 'processing' : 'complete'}">
+                    ${chat.isProcessing ? 'In Progress' : 'Complete'}
+                </div>
+                <div class="chat-item-actions">
+                    <button class="chat-action-btn edit-btn" title="Edit Keywords" data-chat-id="${chat._id}">🔄</button>
+                    <button class="chat-action-btn rename-btn" title="Rename" data-chat-id="${chat._id}" data-chat-title="${chat.title}">✏️</button>
+                    <button class="chat-action-btn delete-btn" title="Delete" data-chat-id="${chat._id}">🗑️</button>
+                </div>
+            `;
+            
+            chatItem.addEventListener('click', () => loadChatSession(chat._id));
+            chatList.appendChild(chatItem);
+        });
+        
+        // Add event listeners for action buttons
+        chatList.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const chatId = btn.getAttribute('data-chat-id');
+                editChat(chatId);
+            });
+        });
+        
+        chatList.querySelectorAll('.rename-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const chatId = btn.getAttribute('data-chat-id');
+                const chatTitle = btn.getAttribute('data-chat-title');
+                openRenameModal(chatId, chatTitle);
+            });
+        });
+        
+        chatList.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const chatId = btn.getAttribute('data-chat-id');
+                openDeleteModal(chatId);
+            });
+        });
+    }
+
+    async function loadChatSession(sessionId) {
+        try {
+            const res = await fetch(`/api/chat/session/${sessionId}`);
+            if (res.ok) {
+                const chatSession = await res.json();
+                currentSessionId = sessionId;
+                renderChat(chatSession);
+                
+                // Update active chat in sidebar
+                document.querySelectorAll('.chat-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.target.closest('.chat-item').classList.add('active');
+                
+                // Update input state
+                setProcessingState(chatSession.isProcessing);
+            }
+        } catch (err) {
+            console.error('Failed to load chat session:', err);
+        }
+    }
+
+    // --- Enhanced Message Formatting ---
+    function formatMessageContent(content) {
+        if (!content) return '';
+        
+        // Handle different content types
+        let formatted = content;
+        
+        // Try to parse JSON first
+        if (typeof content === 'string' && (content.trim().startsWith('{') || content.trim().startsWith('['))) {
+            try {
+                const parsed = JSON.parse(content);
+                formatted = formatObjectToReadableText(parsed);
+            } catch (e) {
+                // Not JSON, continue with regular formatting
+            }
+        }
+        
+        // Apply text formatting
+        formatted = formatted
+            // Remove "Output:" prefix
+            .replace(/^Output:\s*/gm, '')
+            // Remove horizontal lines (---)
+            .replace(/^---+$/gm, '')
+            // Convert **bold** to <strong>
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            // Convert *italic* to <em>
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            // Convert ### headings
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            // Convert ## headings
+            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+            // Convert # headings
+            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+            // Convert bullet points to list items
+            .replace(/^[\s]*[-*•]\s+(.+)$/gm, '<li>$1</li>')
+            // Convert numbered lists
+            .replace(/^[\s]*\d+\.\s+(.+)$/gm, '<li>$1</li>')
+            // Convert line breaks to <br> but preserve paragraph structure
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>')
+            // Wrap content in paragraphs
+            .replace(/^(.)/g, '<p>$1')
+            .replace(/(.)$/g, '$1</p>')
+            // Wrap consecutive list items in <ul>
+            .replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>')
+            // Fix nested ul tags
+            .replace(/<\/ul>\s*<ul>/g, '')
+            // Clean up empty paragraphs
+            .replace(/<p><\/p>/g, '')
+            // Fix paragraph formatting around lists and headings
+            .replace(/<p>(<[uh][123l]>)/g, '$1')
+            .replace(/(<\/[uh][123l]>)<\/p>/g, '$1');
+            
+        return formatted;
+    }
+
+    // Helper function to convert objects to readable text
+    function formatObjectToReadableText(obj) {
+        if (Array.isArray(obj)) {
+            return obj.map((item, index) => {
+                if (typeof item === 'object') {
+                    return `**${index + 1}.** ${formatObjectToReadableText(item)}`;
+                }
+                return `• ${item}`;
+            }).join('\n\n');
+        }
+        
+        if (typeof obj === 'object' && obj !== null) {
+            return Object.entries(obj).map(([key, value]) => {
+                const formattedKey = key.replace(/([A-Z])/g, ' $1')
+                                      .replace(/^./, str => str.toUpperCase())
+                                      .replace(/_/g, ' ');
+                
+                if (typeof value === 'object') {
+                    return `**${formattedKey}:**\n${formatObjectToReadableText(value)}`;
+                }
+                return `**${formattedKey}:** ${value}`;
+            }).join('\n\n');
+        }
+        
+        return String(obj);
+    }
 
     // --- Typing Indicator ---
     function showTypingIndicator(show = true) {
@@ -206,13 +399,17 @@ function handleDashboardPage() {
                 const res = await fetch('/api/chat/initiate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keywords: keywords[currentKeywordIndex], userId: "60c72b2f9b1d8c001f8e4c1a" })
+                    body: JSON.stringify({ keywords: keywords[currentKeywordIndex], userId: userId })
                 });
                 const data = await res.json();
                 if (res.ok) {
                     currentSessionId = data._id;
                     showTypingIndicator(false);
                     renderChat(data);
+                    
+                    // Refresh chat history to show new chat
+                    loadChatHistory();
+                    
                     // Show edit button for 2 minutes
                     editButton.style.display = 'block';
                     editButton.style.opacity = '0';
@@ -255,23 +452,25 @@ function handleDashboardPage() {
         messageDiv.className = `message ${role}`;
         messageDiv.style.opacity = '0';
         messageDiv.style.transform = 'translateY(12px)';
-        let formattedContent = content.replace(/\n/g, '<br>');
+        
+        // Apply enhanced formatting
+        let formattedContent = formatMessageContent(content);
 
         if (contentType === 'news') {
             messageDiv.innerHTML = `
                 <div class="news-content">
                     <div class="content-label">RESEARCH INSIGHTS</div>
-                    <div>${formattedContent}</div>
+                    <div class="formatted-content">${formattedContent}</div>
                 </div>`;
         } else if (contentType === 'linkedin') {
             messageDiv.innerHTML = `
                 <div class="linkedin-content">
                     <div class="content-label">PROFESSIONAL POST</div>
-                    <div>${formattedContent}</div>
+                    <div class="formatted-content">${formattedContent}</div>
                 </div>`;
             linkedinPostContent = content; // Store the content for copying
         } else {
-            messageDiv.innerHTML = formattedContent;
+            messageDiv.innerHTML = `<div class="formatted-content">${formattedContent}</div>`;
         }
 
         // Action buttons
@@ -290,7 +489,7 @@ function handleDashboardPage() {
                     <button class="action-btn copy-btn">Copy</button>
                 `;
                 const copyBtn = actionsDiv.querySelector('.copy-btn');
-                copyBtn.onclick = () => handleCopy(content, actionsDiv);
+                copyBtn.onclick = (e) => handleCopy(content, actionsDiv, e.target);
             }
             messageDiv.appendChild(actionsDiv);
         }
@@ -367,38 +566,75 @@ function handleDashboardPage() {
         }
     }
 
-    function handleCopy(content, actionsDiv) {
-        navigator.clipboard.writeText(content).then(() => {
-            const copyBtn = event.target;
-            copyBtn.innerText = 'Copied!';
-            copyBtn.style.background = '#16a34a';
-            copyBtn.style.transform = 'translateY(-2px)';
-            setTimeout(() => {
-                copyBtn.innerText = 'Copy';
-                copyBtn.style.background = 'var(--glass-bg)';
-                copyBtn.style.transform = 'translateY(0)';
-            }, 2000);
-            // Remove action buttons
-            if (actionsDiv) {
-                actionsDiv.style.opacity = '0';
-                setTimeout(() => actionsDiv.remove(), 400);
-            }
-            // Move to next keyword or enable input
-            if (currentKeywordIndex < keywords.length - 1) {
-                currentKeywordIndex++;
-                setProcessingState(true, 'Processing next keyword...');
-                setTimeout(() => sendMessage(), 1000); // Start next keyword
+    function handleCopy(content, actionsDiv, copyBtn) {
+        // Modern clipboard API with fallback
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(content).then(() => {
+                showCopySuccess(copyBtn, actionsDiv);
+            }).catch(err => {
+                console.error('Clipboard API failed:', err);
+                fallbackCopy(content, copyBtn, actionsDiv);
+            });
+        } else {
+            fallbackCopy(content, copyBtn, actionsDiv);
+        }
+    }
+
+    function fallbackCopy(content, copyBtn, actionsDiv) {
+        // Fallback method using textarea
+        const textArea = document.createElement('textarea');
+        textArea.value = content;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccess(copyBtn, actionsDiv);
             } else {
-                setProcessingState(false, 'Enter new keywords to continue...');
-                messageInput.disabled = false;
-                sendButton.disabled = false;
-                messageInput.placeholder = 'Enter new keywords to continue...';
-                editButton.style.display = 'none';
+                throw new Error('execCommand failed');
             }
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-            alert('Copy failed. Please copy manually.');
-        });
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            // Manual copy prompt
+            prompt('Copy this text manually:', content);
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+
+    function showCopySuccess(copyBtn, actionsDiv) {
+        copyBtn.innerText = 'Copied!';
+        copyBtn.style.background = '#16a34a';
+        copyBtn.style.transform = 'translateY(-2px)';
+        setTimeout(() => {
+            copyBtn.innerText = 'Copy';
+            copyBtn.style.background = 'var(--glass-bg)';
+            copyBtn.style.transform = 'translateY(0)';
+        }, 2000);
+        
+        // Remove action buttons
+        if (actionsDiv) {
+            actionsDiv.style.opacity = '0';
+            setTimeout(() => actionsDiv.remove(), 400);
+        }
+        
+        // Move to next keyword or enable input
+        if (currentKeywordIndex < keywords.length - 1) {
+            currentKeywordIndex++;
+            setProcessingState(true, 'Processing next keyword...');
+            setTimeout(() => sendMessage(), 1000); // Start next keyword
+        } else {
+            setProcessingState(false, 'Enter new keywords to continue...');
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.placeholder = 'Enter new keywords to continue...';
+            editButton.style.display = 'none';
+        }
     }
 
     function handleDecline(messageId, lastMessage) {
@@ -463,4 +699,175 @@ function handleDashboardPage() {
     function scrollToBottom() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+
+    // --- Rename and Delete Functions ---
+    let currentChatId = null;
+
+    function openRenameModal(chatId, currentTitle) {
+        currentChatId = chatId;
+        const renameModal = document.getElementById('renameModal');
+        const renameText = document.getElementById('renameText');
+        renameText.value = currentTitle;
+        renameModal.style.display = 'flex';
+        renameModal.style.opacity = '0';
+        renameModal.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            renameModal.style.opacity = '1';
+            renameModal.style.transform = 'scale(1)';
+            renameModal.style.transition = 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out';
+            renameText.focus();
+            renameText.select();
+        }, 50);
+    }
+
+    function openDeleteModal(chatId) {
+        currentChatId = chatId;
+        const deleteModal = document.getElementById('deleteModal');
+        deleteModal.style.display = 'flex';
+        deleteModal.style.opacity = '0';
+        deleteModal.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            deleteModal.style.opacity = '1';
+            deleteModal.style.transform = 'scale(1)';
+            deleteModal.style.transition = 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out';
+        }, 50);
+    }
+
+    async function editChat(chatId) {
+        try {
+            // Load the chat session
+            const res = await fetch(`/api/chat/session/${chatId}`);
+            if (res.ok) {
+                const chatSession = await res.json();
+                currentSessionId = chatId;
+                
+                // Render the chat in the main area
+                renderChat(chatSession);
+                
+                // Enable editing mode
+                isProcessing = false;
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.placeholder = 'Edit keywords or continue the conversation...';
+                
+                // Extract keywords from the first user message
+                const firstUserMessage = chatSession.messages.find(msg => msg.role === 'user');
+                if (firstUserMessage) {
+                    keywords = firstUserMessage.content.split(',').map(k => k.trim()).filter(k => k);
+                    messageInput.value = keywords.join(', ');
+                }
+                
+                // Show edit button
+                editButton.style.display = 'block';
+                editButton.style.opacity = '1';
+                editButton.style.transform = 'translateY(0)';
+                
+                // Update active chat in sidebar
+                document.querySelectorAll('.chat-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                // Find the chat item with this ID and make it active
+                const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`).closest('.chat-item');
+                if (chatItem) {
+                    chatItem.classList.add('active');
+                }
+                
+                // Focus on input
+                messageInput.focus();
+                
+            } else {
+                alert('Failed to load chat session');
+            }
+        } catch (err) {
+            console.error('Edit chat error:', err);
+            alert('An error occurred while loading the chat');
+        }
+    }
+
+    async function renameChat() {
+        const newTitle = document.getElementById('renameText').value.trim();
+        if (!newTitle) return alert('Please enter a new title.');
+        
+        try {
+            const res = await fetch(`/api/chat/rename/${currentChatId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: newTitle })
+            });
+            
+            if (res.ok) {
+                closeRenameModal();
+                loadChatHistory(); // Refresh the chat list
+            } else {
+                const data = await res.json();
+                console.error('Rename error:', data);
+                alert(data.msg || 'Failed to rename chat');
+            }
+        } catch (err) {
+            console.error('Rename chat error:', err);
+            alert('Network error: Unable to connect to server. Please check your connection.');
+        }
+    }
+
+    async function deleteChat() {
+        try {
+            const res = await fetch(`/api/chat/delete/${currentChatId}`, {
+                method: 'DELETE'
+            });
+            
+            if (res.ok) {
+                closeDeleteModal();
+                // If we're currently viewing the deleted chat, clear the chat area
+                if (currentSessionId === currentChatId) {
+                    currentSessionId = null;
+                    chatMessages.innerHTML = `
+                        <div class="welcome-screen">
+                            <h1>🔎Research Assistant</h1>
+                            <p>Enter keywords below to discover actionable business insights.</p>
+                        </div>`;
+                    setProcessingState(false);
+                }
+                loadChatHistory(); // Refresh the chat list
+            } else {
+                const data = await res.json();
+                console.error('Delete error:', data);
+                alert(data.msg || 'Failed to delete chat');
+            }
+        } catch (err) {
+            console.error('Delete chat error:', err);
+            alert('Network error: Unable to connect to server. Please check your connection.');
+        }
+    }
+
+    function closeRenameModal() {
+        const renameModal = document.getElementById('renameModal');
+        renameModal.style.opacity = '0';
+        renameModal.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            renameModal.style.display = 'none';
+            document.getElementById('renameText').value = '';
+        }, 300);
+    }
+
+    function closeDeleteModal() {
+        const deleteModal = document.getElementById('deleteModal');
+        deleteModal.style.opacity = '0';
+        deleteModal.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            deleteModal.style.display = 'none';
+        }, 300);
+    }
+
+    // Event listeners for modals
+    document.getElementById('submitRenameBtn').addEventListener('click', renameChat);
+    document.getElementById('cancelRenameBtn').addEventListener('click', closeRenameModal);
+    document.getElementById('confirmDeleteBtn').addEventListener('click', deleteChat);
+    document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
+
+    // Allow Enter key to submit rename
+    document.getElementById('renameText').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            renameChat();
+        }
+    });
 }

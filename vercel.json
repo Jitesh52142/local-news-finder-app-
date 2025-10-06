@@ -14,10 +14,11 @@
     { "src": "/api/(.*)", "dest": "server.js" },
     { "src": "/login", "dest": "/public/login.html" },
     { "src": "/register", "dest": "/public/register.html" },
-    { "src": "/dashboard", "dest": "/server.js" },
-    { "src": "/home", "dest": "/public/home.html" },
-    { "src": "/", "dest": "/public/home.html" },
+    { "src": "/", "dest": "/public/index.html" },
     { "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))", "dest": "/public/$1" },
     { "src": "/(.*)", "dest": "/public/$1" }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

@@ -1,13 +1,19 @@
 {
   "name": "ai_agent",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Professional Research Assistant - AI-powered insights for consultancy",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "echo 'No build step required'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "akshat verma",
   "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",

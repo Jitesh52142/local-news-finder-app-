@@ -68,6 +68,32 @@ professional-research-app/
 
 This app is ready for deployment on [Vercel](https://vercel.com/) using the provided [`vercel.json`](vercel.json) configuration.
 
+### Quick Deploy to Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/ai-agent)
+
+### Manual Deployment
+
+1. **Fork this repository** to your GitHub account
+2. **Connect to Vercel**:
+   - Go to [vercel.com](https://vercel.com)
+   - Click "New Project"
+   - Import your forked repository
+3. **Set Environment Variables** in Vercel dashboard:
+   - `MONGODB_URI`: Your MongoDB Atlas connection string
+   - `JWT_SECRET`: A strong random string for JWT signing
+   - `WEBHOOK_*`: Optional webhook URLs for AI services
+4. **Deploy**: Click "Deploy" and your app will be live!
+
+### Environment Variables Required
+
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+JWT_SECRET=your-super-secret-jwt-key
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+
 ## Technologies Used
 
 - Node.js, Express.js
