@@ -835,7 +835,7 @@ function handleDashboardPage() {
             } else {
                 const data = await res.json();
                 console.error('Rename error:', data);
-                alert(data.msg || 'Failed to rename chat');
+                // Silently handle error - no alert shown
             }
         } catch (err) {
             console.error('Rename chat error:', err);
@@ -865,7 +865,7 @@ function handleDashboardPage() {
             } else {
                 const data = await res.json();
                 console.error('Delete error:', data);
-                alert(data.msg || 'Failed to delete chat');
+                // Silently handle error - no alert shown
             }
         } catch (err) {
             console.error('Delete chat error:', err);
