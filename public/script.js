@@ -428,11 +428,12 @@ function handleDashboardPage() {
                     }, 120000); // 2 minutes
                 } else {
                     showTypingIndicator(false);
-                    addMessage('system', `Error: ${data.msg}`);
+                    addMessage('system', `Unable to fetch insights: ${data.msg || 'Please try again later.'}`);
                 }
             } catch (err) {
                 showTypingIndicator(false);
-                addMessage('system', 'A server error occurred.');
+                addMessage('system', 'Connection error. Please check your internet connection and try again.');
+                console.error('Send message error:', err);
             } finally {
                 setProcessingState(false);
             }
