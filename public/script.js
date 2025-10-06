@@ -233,6 +233,7 @@ function handleDashboardPage() {
                 e.stopPropagation();
                 const chatId = btn.getAttribute('data-chat-id');
                 const chatTitle = btn.getAttribute('data-chat-title');
+                currentChatId = chatId; // Set the current chat ID
                 openRenameModal(chatId, chatTitle);
             });
         });
@@ -241,6 +242,7 @@ function handleDashboardPage() {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const chatId = btn.getAttribute('data-chat-id');
+                currentChatId = chatId; // Set the current chat ID
                 openDeleteModal(chatId);
             });
         });
@@ -473,24 +475,16 @@ function handleDashboardPage() {
             messageDiv.innerHTML = `<div class="formatted-content">${formattedContent}</div>`;
         }
 
-        // Action buttons
+        // Action buttons - Show Accept/Decline for both news and linkedin content
         if (role === 'bot' && contentType && isProcessing) {
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'action-buttons';
-            if (contentType === 'news') {
-                actionsDiv.innerHTML = `
-                    <button class="action-btn accept-btn">Accept</button>
-                    <button class="action-btn decline-btn">Decline</button>
-                `;
-                actionsDiv.querySelector('.accept-btn').onclick = () => handleAccept(content, contentType, actionsDiv);
-                actionsDiv.querySelector('.decline-btn').onclick = () => handleDecline(messageId, { content, contentType });
-            } else if (contentType === 'linkedin') {
-                actionsDiv.innerHTML = `
-                    <button class="action-btn copy-btn">Copy</button>
-                `;
-                const copyBtn = actionsDiv.querySelector('.copy-btn');
-                copyBtn.onclick = (e) => handleCopy(content, actionsDiv, e.target);
-            }
+            actionsDiv.innerHTML = `
+                <button class="action-btn accept-btn">Accept</button>
+                <button class="action-btn decline-btn">Decline</button>
+            `;
+            actionsDiv.querySelector('.accept-btn').onclick = () => handleAccept(content, contentType, actionsDiv);
+            actionsDiv.querySelector('.decline-btn').onclick = () => handleDecline(messageId, { content, contentType });
             messageDiv.appendChild(actionsDiv);
         }
 
@@ -557,12 +551,52 @@ function handleDashboardPage() {
             const data = await res.json();
             if (res.ok) {
                 renderChat(data);
+                
+                // If LinkedIn post is accepted, show Copy button
+                if (contentType === 'linkedin') {
+                    setTimeout(() => {
+                        showCopyButtonForAcceptedPost(content);
+                    }, 500);
+                }
             }
         } catch (err) {
             addMessage('system', 'A server error occurred.');
         } finally {
             setProcessingState(false);
             addResponseTime();
+        }
+    }
+
+    function showCopyButtonForAcceptedPost(content) {
+        // Find the last LinkedIn post message and add a Copy button
+        const messages = chatMessages.querySelectorAll('.message.bot');
+        const lastMessage = messages[messages.length - 1];
+        
+        if (lastMessage && lastMessage.querySelector('.linkedin-content')) {
+            // Remove any existing copy button
+            const existingCopyBtn = lastMessage.querySelector('.accepted-copy-btn');
+            if (existingCopyBtn) {
+                existingCopyBtn.remove();
+            }
+            
+            // Create new copy button
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'action-btn copy-btn accepted-copy-btn';
+            copyBtn.textContent = 'Copy';
+            copyBtn.style.marginTop = '16px';
+            copyBtn.style.opacity = '0';
+            copyBtn.style.transform = 'translateY(10px)';
+            
+            copyBtn.onclick = (e) => handleCopy(content, null, e.target);
+            
+            lastMessage.appendChild(copyBtn);
+            
+            // Animate the button in
+            setTimeout(() => {
+                copyBtn.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                copyBtn.style.opacity = '1';
+                copyBtn.style.transform = 'translateY(0)';
+            }, 100);
         }
     }
 

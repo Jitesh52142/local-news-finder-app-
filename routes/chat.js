@@ -221,7 +221,8 @@ router.put('/rename/:sessionId', async (req, res) => {
 
         // Validate ObjectId format
         if (!mongoose.Types.ObjectId.isValid(sessionId)) {
-            return res.status(400).json({ msg: 'Invalid chat session ID' });
+            console.log('Invalid ObjectId format for rename:', sessionId);
+            return res.status(400).json({ msg: 'Chat not found' });
         }
 
         if (!title || title.trim().length === 0) {
@@ -252,15 +253,18 @@ router.delete('/delete/:sessionId', async (req, res) => {
 
         // Validate ObjectId format
         if (!mongoose.Types.ObjectId.isValid(sessionId)) {
-            return res.status(400).json({ msg: 'Invalid chat session ID' });
+            console.log('Invalid ObjectId format:', sessionId);
+            return res.status(400).json({ msg: 'Chat not found' });
         }
 
         const deletedChat = await ChatSession.findByIdAndDelete(sessionId);
 
         if (!deletedChat) {
-            return res.status(404).json({ msg: 'Chat session not found' });
+            console.log('Chat not found in database:', sessionId);
+            return res.status(404).json({ msg: 'Chat not found' });
         }
 
+        console.log('Chat deleted successfully:', sessionId);
         res.json({ msg: 'Chat deleted successfully' });
     } catch (error) {
         console.error('Delete chat error:', error);
