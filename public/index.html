@@ -8,23 +8,20 @@
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <div class="header-content">
-                <h1>🧠 Professional Research Assistant</h1>
-                <p>AI-powered insights for consultancy</p>
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Chat History</h2>
+                <button id="newChatBtn" class="new-chat-btn">+ New Chat</button>
+            </div>
+            <div id="chatList" class="chat-list">
+                <!-- Chat history will be loaded here -->
+            </div>
+            <div class="sidebar-footer">
                 <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
-        </header>
+        </aside>
 
         <main class="main-content">
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <button id="newChatBtn" class="new-chat-btn">+ New Chat</button>
-                </div>
-                <div id="chatList" class="chat-list">
-                    <!-- Chat history will be loaded here -->
-                </div>
-            </aside>
 
             <div class="chat-container">
                 <div id="chatMessages" class="chat-messages">
