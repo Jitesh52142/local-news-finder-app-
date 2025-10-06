@@ -7,37 +7,34 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="dashboard-container">
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h2>Chat History</h2>
                 <button id="newChatBtn" class="new-chat-btn">+ New Chat</button>
             </div>
-            <div id="chatList" class="chat-list">
-                <!-- Chat history will be loaded here -->
-            </div>
+            <div class="chat-list" id="chatList"></div>
             <div class="sidebar-footer">
                 <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
         </aside>
 
-        <main class="main-content">
-
-            <div class="chat-container">
-                <div id="chatMessages" class="chat-messages">
-                    <div class="welcome-message">
-                        <h2>Welcome to your AI Research Assistant</h2>
-                        <p>Enter keywords to get started with business insights and LinkedIn post generation.</p>
-                    </div>
+        <main class="chat-area">
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-screen">
+                    <h1>🔎Research Assistant</h1>
+                    <p>Enter keywords below to discover actionable business insights.</p>
                 </div>
-
-                <div class="input-container">
-                    <div class="input-wrapper">
-                        <input type="text" id="messageInput" placeholder="Enter keywords for business insights..." disabled>
-                        <button id="editBtn" class="edit-btn" style="display: none;">Edit Keywords</button>
-                        <button id="sendButton" class="send-btn" disabled>Send</button>
-                    </div>
-                </div>
+            </div>
+            
+            <div class="input-container">
+                <textarea id="messageInput" placeholder="Enter keywords for business insights..." rows="1"></textarea>
+                <button id="sendButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"></path>
+                    </svg>
+                </button>
+                <button id="editBtn" class="edit-btn" style="display: none;">Edit Keywords/Chat</button>
             </div>
         </main>
     </div>

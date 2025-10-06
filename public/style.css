@@ -107,7 +107,7 @@ body {
 }
 
 /* --- Dashboard --- */
-.container {
+.dashboard-container {
     display: flex;
     height: 100vh;
 }
@@ -160,17 +160,11 @@ body {
 }
 
 /* Chat History Styles */
-.main-content {
+.chat-area {
     flex: 1;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-}
-
-.chat-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+    background: var(--bg-primary);
 }
 
 .chat-list {
@@ -182,54 +176,28 @@ body {
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
+    padding: 34px;
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-.input-wrapper {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.welcome-message {
+.welcome-screen {
     text-align: center;
-    padding: 40px 20px;
+    padding: 60px 20px;
     color: var(--text-secondary);
 }
 
-.welcome-message h2 {
-    font-size: 24px;
-    margin-bottom: 12px;
+.welcome-screen h1 {
+    font-size: 32px;
+    margin-bottom: 16px;
     color: var(--text-primary);
-}
-
-.welcome-message p {
-    font-size: 16px;
-    line-height: 1.5;
-}
-
-.send-btn {
-    padding: 12px 24px;
-    background: var(--gradient-primary);
-    color: white;
-    border: none;
-    border-radius: 12px;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
 }
 
-.send-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
-}
-
-.send-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.welcome-screen p {
+    font-size: 18px;
+    line-height: 1.6;
 }
 
 .chat-item {
@@ -582,23 +550,23 @@ body {
 
 /* Input Area */
 .input-container {
-    padding: 22px 34px; /* Increased from 20px 32px */
+    padding: 20px 32px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
-    gap: 18px; /* Increased from 16px */
+    gap: 16px;
     align-items: flex-end;
     background: var(--glass-bg);
     backdrop-filter: blur(10px);
 }
 #messageInput {
     flex: 1;
-    padding: 16px 22px; /* Increased from 14px 20px */
+    padding: 14px 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 18px; /* Slightly larger radius */
-    font-size: 17px; /* Increased from 16px */
+    border-radius: 16px;
+    font-size: 16px;
     outline: none;
     resize: none;
-    max-height: 180px; /* Increased from 160px */
+    max-height: 160px;
     background: var(--glass-bg);
     backdrop-filter: blur(8px);
     color: var(--text-primary);
@@ -607,7 +575,7 @@ body {
 }
 #messageInput:focus {
     border-color: var(--accent-primary);
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); /* Slightly larger shadow */
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
 }
 #sendButton {
     background: var(--gradient-primary);
