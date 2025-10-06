@@ -1,0 +1,248 @@
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// News Research Endpoint
+app.post('/api/news', async (req, res) => {
+    try {
+        const { keywords, timestamp, source } = req.body;
+        
+        console.log('News research request:', { keywords, timestamp, source });
+        
+        // Simulate AI-powered news research
+        const newsInsights = await generateNewsInsights(keywords);
+        
+        res.json({
+            success: true,
+            insights: newsInsights,
+            keywords: keywords,
+            timestamp: new Date().toISOString(),
+            source: 'webhook-endpoints'
+        });
+    } catch (error) {
+        console.error('News endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Content Creation Endpoint
+app.post('/api/content', async (req, res) => {
+    try {
+        const { type, data, timestamp, source } = req.body;
+        
+        console.log('Content creation request:', { type, data, timestamp, source });
+        
+        const content = await generateContent(type, data);
+        
+        res.json({
+            success: true,
+            content: content,
+            type: type,
+            timestamp: new Date().toISOString(),
+            source: 'webhook-endpoints'
+        });
+    } catch (error) {
+        console.error('Content endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// News Rejection Endpoint
+app.post('/api/rejection', async (req, res) => {
+    try {
+        const { sessionId, feedback, timestamp, source } = req.body;
+        
+        console.log('News rejection request:', { sessionId, feedback, timestamp, source });
+        
+        // Process rejection feedback
+        const result = await processRejection(sessionId, feedback);
+        
+        res.json({
+            success: true,
+            result: result,
+            sessionId: sessionId,
+            timestamp: new Date().toISOString(),
+            source: 'webhook-endpoints'
+        });
+    } catch (error) {
+        console.error('Rejection endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// LinkedIn Post Creation Endpoint
+app.post('/api/linkedin', async (req, res) => {
+    try {
+        const { content, style, timestamp, source } = req.body;
+        
+        console.log('LinkedIn creation request:', { content, style, timestamp, source });
+        
+        const linkedinPost = await generateLinkedInPost(content, style);
+        
+        res.json({
+            success: true,
+            post: linkedinPost,
+            style: style,
+            timestamp: new Date().toISOString(),
+            source: 'webhook-endpoints'
+        });
+    } catch (error) {
+        console.error('LinkedIn endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        service: 'webhook-endpoints'
+    });
+});
+
+// AI-powered content generation functions
+async function generateNewsInsights(keywords) {
+    // Simulate AI processing delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return `🔍 **AI-Powered Research Insights for: ${keywords}**
+
+**Market Intelligence:**
+• Real-time analysis shows ${keywords} sector growing at 25% CAGR
+• Top 3 companies controlling 60% market share
+• Emerging startups raising $2.3B in funding this quarter
+
+**Trend Analysis:**
+• Consumer adoption increased 40% year-over-year
+• Mobile-first approach driving 70% of new user acquisition
+• AI integration becoming standard across all major players
+
+**Competitive Landscape:**
+• Market leader: 35% share, focusing on enterprise solutions
+• Fastest growing: 15% share, targeting SMB market
+• New entrants: 5 startups with innovative approaches
+
+**Investment Opportunities:**
+• Early-stage companies with unique value propositions
+• Infrastructure providers supporting the ecosystem
+• Data analytics and insights platforms
+
+**Risk Assessment:**
+• Regulatory uncertainty in key markets
+• Talent shortage affecting growth potential
+• Economic headwinds impacting consumer spending
+
+**Strategic Recommendations:**
+• Focus on differentiation through technology
+• Build strong partnerships with key players
+• Invest in talent acquisition and retention
+• Monitor regulatory developments closely
+
+*Generated by AI Webhook Service - ${new Date().toLocaleDateString()}*`;
+}
+
+async function generateContent(type, data) {
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    return `📝 **AI-Generated ${type} Content**
+
+**Content Overview:**
+This is a professionally crafted ${type} generated using advanced AI algorithms. The content is optimized for engagement and conversion.
+
+**Key Features:**
+• Professional tone and structure
+• SEO-optimized for better visibility
+• Engaging call-to-action elements
+• Mobile-responsive formatting
+
+**Content Structure:**
+1. Compelling headline
+2. Engaging introduction
+3. Value-driven main content
+4. Strong conclusion
+5. Clear call-to-action
+
+**Optimization Tips:**
+• A/B test different headlines
+• Monitor engagement metrics
+• Update content regularly
+• Track conversion rates
+
+*Generated by AI Webhook Service - ${new Date().toLocaleDateString()}*`;
+}
+
+async function processRejection(sessionId, feedback) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return {
+        processed: true,
+        sessionId: sessionId,
+        feedback: feedback,
+        improvements: [
+            'Content quality enhancement',
+            'Better keyword targeting',
+            'Improved structure',
+            'Enhanced readability'
+        ],
+        nextSteps: 'Content will be regenerated with improvements'
+    };
+}
+
+async function generateLinkedInPost(content, style = 'professional') {
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    
+    return `💼 **Professional LinkedIn Post**
+
+**Post Content:**
+${content}
+
+**Style: ${style}**
+
+**Post Features:**
+• Professional tone optimized for LinkedIn
+• Engaging hook to capture attention
+• Value-driven content for your network
+• Strategic hashtag placement
+• Clear call-to-action
+
+**Suggested Hashtags:**
+#BusinessInsights #ProfessionalGrowth #IndustryTrends #Networking #CareerDevelopment
+
+**Engagement Tips:**
+• Post during peak hours (8-10 AM, 12-2 PM, 5-7 PM)
+• Tag relevant connections
+• Respond to comments promptly
+• Share in relevant groups
+
+*Generated by AI Webhook Service - ${new Date().toLocaleDateString()}*`;
+}
+
+// Start server
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Webhook endpoints server running on port ${PORT}`);
+        console.log(`Health check: http://localhost:${PORT}/api/health`);
+    });
+}
+
+module.exports = app;

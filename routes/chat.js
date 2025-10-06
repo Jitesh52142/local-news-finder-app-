@@ -2,15 +2,13 @@ const express = require('express');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const ChatSession = require('../models/Chat');
+const webhookService = require('../services/webhookService');
+const webhookConfig = require('../config/webhooks');
 // Add authentication middleware here later if needed
 const router = express.Router();
 
-const WEBHOOKS = {
-    NEWS_FINDER: process.env.WEBHOOK_NEWS_FINDER || 'https://mockapi.io/api/v1/research/news',
-    CONTENT_CREATION: process.env.WEBHOOK_CONTENT_CREATION || 'https://mockapi.io/api/v1/research/content',
-    NEWS_REJECTION: process.env.WEBHOOK_NEWS_REJECTION || 'https://mockapi.io/api/v1/research/rejection',
-    LINKEDIN_REMAKING: process.env.WEBHOOK_LINKEDIN_REMAKING || 'https://mockapi.io/api/v1/research/linkedin'
-};
+// Get current webhook URLs based on environment
+const WEBHOOKS = webhookConfig.getCurrentWebhooks();
 
 // Helper to format responses from webhooks
 const formatWebhookResponse = (data) => {
@@ -125,39 +123,8 @@ router.post('/initiate', async (req, res) => {
     const { keywords, userId } = req.body; // Assuming userId is sent from a logged-in user
     
     try {
-        // Try to fetch from webhook first
-        let newsContent;
-        try {
-            const response = await axios.post(WEBHOOKS.NEWS_FINDER, { keywords }, { timeout: 10000 });
-            newsContent = formatWebhookResponse(response.data);
-        } catch (webhookError) {
-            console.log('Webhook failed, using fallback response:', webhookError.message);
-            // Fallback response when webhook fails
-            newsContent = `🔍 **Research Insights for: ${keywords}**
-
-**Market Analysis:**
-• Current trends in ${keywords} show significant growth potential
-• Key players are investing heavily in this space
-• Consumer demand is increasing by 15-20% annually
-
-**Key Opportunities:**
-• Emerging technologies are creating new possibilities
-• Market gaps present untapped potential
-• Strategic partnerships could accelerate growth
-
-**Risk Factors:**
-• Regulatory changes may impact the sector
-• Competition is intensifying rapidly
-• Economic conditions could affect adoption
-
-**Recommendations:**
-• Focus on innovation and differentiation
-• Build strong customer relationships
-• Monitor market trends closely
-• Consider strategic partnerships
-
-*Note: This is a sample response. For real-time data, please ensure webhook configuration is properly set up.*`;
-        }
+        // Use webhook service for news insights
+        const newsContent = await webhookService.fetchNewsInsights(keywords);
 
         // Create and save the new chat session
         const newChat = new ChatSession({
@@ -183,8 +150,8 @@ router.post('/accept', async (req, res) => {
     const { sessionId, lastMessageContent } = req.body;
 
     try {
-        const response = await axios.post(WEBHOOKS.CONTENT_CREATION, { news: lastMessageContent });
-        const postContent = formatWebhookResponse(response.data);
+        // Use webhook service for content creation
+        const postContent = await webhookService.createLinkedInPost(lastMessageContent, 'professional');
 
         const updatedChat = await ChatSession.findByIdAndUpdate(
             sessionId,
@@ -199,6 +166,7 @@ router.post('/accept', async (req, res) => {
         res.json(updatedChat);
 
     } catch (error) {
+        console.error('Error in /accept route:', error);
         res.status(500).json({ msg: 'Error creating LinkedIn post', error: error.message });
     }
 });
@@ -208,19 +176,16 @@ router.post('/decline', async (req, res) => {
     const { sessionId, feedback, lastMessage, messageId } = req.body;
 
     try {
-        let webhookUrl;
-        let payload;
+        let refinedContent;
 
         if (lastMessage.contentType === 'news') {
-            webhookUrl = WEBHOOKS.NEWS_REJECTION;
-            payload = { news: lastMessage.content, feedback };
+            // Use webhook service for news rejection
+            const result = await webhookService.handleNewsRejection(sessionId, feedback);
+            refinedContent = await webhookService.fetchNewsInsights(lastMessage.content);
         } else {
-            webhookUrl = WEBHOOKS.LINKEDIN_REMAKING;
-            payload = { post: lastMessage.content, feedback };
+            // Use webhook service for LinkedIn remaking
+            refinedContent = await webhookService.createLinkedInPost(lastMessage.content, 'professional');
         }
-
-        const response = await axios.post(webhookUrl, payload);
-        const refinedContent = formatWebhookResponse(response.data);
 
         // Update the original message with feedback and add the new bot response
         const chat = await ChatSession.findById(sessionId);
